@@ -613,4 +613,69 @@ class MyCareer:
             "career_stats": self.player.career_stats,
             "messages": self.messages[-10:],  # last 10 messages
         }
+# =========================
+# RETRO FIELD (PYGAME)
+# =========================
+
+class RetroField:
+    def __init__(self):
+        pygame.init()
+        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+        pygame.display.set_caption("Madden 26 Retro Field")
+        self.clock = pygame.time.Clock()
+
+        # Player icon on field
+        self.player_x = SCREEN_WIDTH // 2
+        self.player_y = SCREEN_HEIGHT // 2
+        self.player_speed = 3
+
+    def draw_field(self):
+        """Draw a simple retro football field."""
+        self.screen.fill((0, 100, 0))  # green field
+
+        # Yard lines
+        for x in range(0, SCREEN_WIDTH, 40):
+            pygame.draw.line(self.screen, (255, 255, 255), (x, 0), (x, SCREEN_HEIGHT), 1)
+
+        # Hash marks
+        for y in range(20, SCREEN_HEIGHT, 40):
+            pygame.draw.line(self.screen, (255, 255, 255), (0, y), (SCREEN_WIDTH, y), 1)
+
+        # Player dot
+        pygame.draw.circle(self.screen, (255, 255, 0), (self.player_x, self.player_y), 6)
+
+    def handle_input(self):
+        keys = pygame.key.get_pressed()
+
+        if keys[pygame.K_LEFT]:
+            self.player_x -= self.player_speed
+        if keys[pygame.K_RIGHT]:
+            self.player_x += self.player_speed
+        if keys[pygame.K_UP]:
+            self.player_y -= self.player_speed
+        if keys[pygame.K_DOWN]:
+            self.player_y += self.player_speed
+
+        # Keep player on screen
+        self.player_x = max(0, min(SCREEN_WIDTH, self.player_x))
+        self.player_y = max(0, min(SCREEN_HEIGHT, self.player_y))
+
+    def run(self):
+        """Main loop for the retro field."""
+        running = True
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        running = False
+
+            self.handle_input()
+            self.draw_field()
+
+            pygame.display.flip()
+            self.clock.tick(FPS)
+
+        pygame.quit()
 
