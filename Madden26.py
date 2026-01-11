@@ -506,4 +506,111 @@ def save_league(league: League, filepath: str):
             "gm": {"name": t.gm.name, "team_id": t.gm.team_id},
             "wins": t.wins,
             "losses": t.losses,
-            "
+            "# =========================
+# MYCAREER MODE
+# =========================
+
+class MyCareer:
+    def __init__(self, league: League, player: Player):
+        self.league = league
+        self.player = player
+        self.trade_requested = False
+        self.messages: List[str] = []
+
+    # -------------------------
+    # GM INTERACTIONS
+    # -------------------------
+
+    def gm_message(self, text: str):
+        """Store a message from the GM to show in menus."""
+        self.messages.append(text)
+
+    def check_captaincy(self):
+        """If player becomes captain, GM sends a message."""
+        team = self.league._get_team_by_id(self.player.team_id)
+        if not team:
+            return
+
+        new_captain = team.random_captain_update()
+        if new_captain and new_captain is self.player:
+            msg = team.gm.announce_captain(self.player)
+            self.gm_message(msg)
+
+    def request_trade(self):
+        """Player asks to be traded."""
+        self.trade_requested = True
+        team = self.league._get_team_by_id(self.player.team_id)
+        if team:
+            msg = team.gm.talk_trade(self.player, requested=True)
+            self.gm_message(msg)
+
+    def process_trade(self):
+        """If trade requested, move player to a random new team."""
+        if not self.trade_requested:
+            return
+
+        old_team = self.league._get_team_by_id(self.player.team_id)
+        new_team = random.choice(self.league.teams)
+
+        if new_team.id == self.player.team_id:
+            return  # no change
+
+        if old_team:
+            old_team.remove_player(self.player)
+
+        new_team.add_player(self.player)
+
+        # Reset trade request
+        self.trade_requested = False
+
+        msg = new_team.gm.talk_trade(self.player, requested=False)
+        self.gm_message(msg)
+
+    # -------------------------
+    # CAREER PROGRESSION
+    # -------------------------
+
+    def play_full_season(self):
+        """Simulate a full NFL season and update MyCareer state."""
+        # Process trade if requested
+        self.process_trade()
+
+        # Run the league season
+        season_result = self.league.run_full_season()
+
+        # Check captaincy
+        self.check_captaincy()
+
+        # Check if player won any awards
+        for award_name, pid in season_result.awards.items():
+            if id(self.player) == pid:
+                msg = self.league._get_team_by_id(self.player.team_id).gm.praise_player(
+                    self.player, award_name
+                )
+                self.gm_message(msg)
+
+        # Check retirement
+        if self.player.retired:
+            self.gm_message(f"{self.player.name} has retired from the NFL.")
+
+        return season_result
+
+    # -------------------------
+    # CAREER SUMMARY
+    # -------------------------
+
+    def get_summary(self) -> Dict[str, any]:
+        """Return a dictionary of the player's career info."""
+        return {
+            "name": self.player.name,
+            "position": self.player.position,
+            "age": self.player.age,
+            "overall": self.player.overall,
+            "team_id": self.player.team_id,
+            "career_years": self.player.career_years,
+            "accolades": self.player.accolades,
+            "hall_of_fame": self.player.hall_of_fame,
+            "career_stats": self.player.career_stats,
+            "messages": self.messages[-10:],  # last 10 messages
+        }
+
