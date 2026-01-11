@@ -506,7 +506,7 @@ def save_league(league: League, filepath: str):
             "gm": {"name": t.gm.name, "team_id": t.gm.team_id},
             "wins": t.wins,
             "losses": t.losses,
-            # =========================
+# =========================
 # MYCAREER MODE
 # =========================
 
