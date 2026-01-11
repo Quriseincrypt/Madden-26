@@ -678,4 +678,158 @@ class RetroField:
             self.clock.tick(FPS)
 
         pygame.quit()
+# =========================
+# MENUS + GAME LAUNCHER
+# =========================
+
+class GameMenu:
+    def __init__(self):
+        pygame.init()
+        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+        pygame.display.set_caption("Madden 26 — Main Menu")
+        self.clock = pygame.time.Clock()
+        self.font = pygame.font.SysFont("Arial", 20)
+
+        # Build league + rosters
+        self.teams = create_nfl_teams()
+        generate_placeholder_rosters(self.teams)
+        self.league = League(self.teams)
+
+        # MyCareer state
+        self.myplayer: Optional[Player] = None
+        self.mycareer: Optional[MyCareer] = None
+
+    # -------------------------
+    # DRAW HELPERS
+    # -------------------------
+
+    def draw_text(self, text, x, y, color=(255, 255, 255)):
+        surf = self.font.render(text, True, color)
+        self.screen.blit(surf, (x, y))
+
+    # -------------------------
+    # MAIN MENU
+    # -------------------------
+
+    def main_menu(self):
+        running = True
+        while running:
+            self.screen.fill((0, 0, 40))
+            self.draw_text("MADDEN 26 — MAIN MENU", 180, 40)
+            self.draw_text("1. Start MyCareer", 200, 120)
+            self.draw_text("2. Play Retro Field", 200, 160)
+            self.draw_text("ESC. Quit", 200, 200)
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_1:
+                        self.start_mycareer()
+                    if event.key == pygame.K_2:
+                        RetroField().run()
+                    if event.key == pygame.K_ESCAPE:
+                        running = False
+
+            pygame.display.flip()
+            self.clock.tick(FPS)
+
+        pygame.quit()
+
+    # -------------------------
+    # MYCAREER SETUP
+    # -------------------------
+
+    def start_mycareer(self):
+        """Create a custom player and begin MyCareer."""
+        # Simple default player for now
+        self.myplayer = create_custom_player(
+            name="Qurise Backus",
+            position="QB",
+            age=21,
+            overall=80
+        )
+
+        # Add player to a random team
+        team = random.choice(self.teams)
+        team.add_player(self.myplayer)
+
+        # Create MyCareer object
+        self.mycareer = MyCareer(self.league, self.myplayer)
+
+        # Enter MyCareer menu
+        self.mycareer_menu()
+
+    # -------------------------
+    # MYCAREER MENU
+    # -------------------------
+
+    def mycareer_menu(self):
+        running = True
+        while running:
+            self.screen.fill((20, 0, 0))
+            self.draw_text("MYCAREER MODE", 220, 20)
+
+            self.draw_text("1. Play Full Season", 200, 100)
+            self.draw_text("2. Request Trade", 200, 140)
+            self.draw_text("3. View Career Summary", 200, 180)
+            self.draw_text("4. Enter Retro Field", 200, 220)
+            self.draw_text("ESC. Back to Main Menu", 200, 260)
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_1:
+                        self.mycareer.play_full_season()
+                    if event.key == pygame.K_2:
+                        self.mycareer.request_trade()
+                    if event.key == pygame.K_3:
+                        self.show_career_summary()
+                    if event.key == pygame.K_4:
+                        RetroField().run()
+                    if event.key == pygame.K_ESCAPE:
+                        running = False
+
+            pygame.display.flip()
+            self.clock.tick(FPS)
+
+    # -------------------------
+    # CAREER SUMMARY SCREEN
+    # -------------------------
+
+    def show_career_summary(self):
+        summary = self.mycareer.get_summary()
+
+        viewing = True
+        while viewing:
+            self.screen.fill((0, 0, 0))
+            self.draw_text("CAREER SUMMARY", 220, 20)
+
+            y = 80
+            for key, value in summary.items():
+                self.draw_text(f"{key}: {value}", 40, y)
+                y += 30
+
+            self.draw_text("ESC to return", 40, SCREEN_HEIGHT - 40)
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    viewing = False
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        viewing = False
+
+            pygame.display.flip()
+            self.clock.tick(FPS)
+
+
+# =========================
+# AUTO-START GAME
+# =========================
+
+if __name__ == "__main__":
+    GameMenu().main_menu()
 
